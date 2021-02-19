@@ -459,6 +459,58 @@ public class JsonReader implements Closeable {
 
   int doPeek() throws IOException {
     int peekStack = stack[stackSize - 1];
+    int stat = handleTermination(peekStack);
+    if(stat != -1){
+      return stat;
+    }
+    int c = nextNonWhitespace(true);
+    switch (c) {
+    case ']':
+      if (peekStack == JsonScope.EMPTY_ARRAY) {
+        return peeked = PEEKED_END_ARRAY;
+      }
+      // fall-through to handle ",]"
+    case ';':
+    case ',':
+      // In lenient mode, a 0-length literal in an array means 'null'.
+      if (peekStack == JsonScope.EMPTY_ARRAY || peekStack == JsonScope.NONEMPTY_ARRAY) {
+        checkLenient();
+        pos--;
+        return peeked = PEEKED_NULL;
+      } else {
+        throw syntaxError("Unexpected value");
+      }
+    case '\'':
+      checkLenient();
+      return peeked = PEEKED_SINGLE_QUOTED;
+    case '"':
+      return peeked = PEEKED_DOUBLE_QUOTED;
+    case '[':
+      return peeked = PEEKED_BEGIN_ARRAY;
+    case '{':
+      return peeked = PEEKED_BEGIN_OBJECT;
+    default:
+      pos--; // Don't consume the first character in a literal value.
+    }
+
+    int result = peekKeyword();
+    if (result != PEEKED_NONE) {
+      return result;
+    }
+
+    result = peekNumber();
+    if (result != PEEKED_NONE) {
+      return result;
+    }
+
+    if (!isLiteral(buffer[pos])) {
+      throw syntaxError("Expected value");
+    }
+
+    checkLenient();
+    return peeked = PEEKED_UNQUOTED;
+  }
+  private int handleTermination(int peekStack)throws IOException{
     if (peekStack == JsonScope.EMPTY_ARRAY) {
       stack[stackSize - 1] = JsonScope.NONEMPTY_ARRAY;
     } else if (peekStack == JsonScope.NONEMPTY_ARRAY) {
@@ -544,53 +596,7 @@ public class JsonReader implements Closeable {
     } else if (peekStack == JsonScope.CLOSED) {
       throw new IllegalStateException("JsonReader is closed");
     }
-
-    int c = nextNonWhitespace(true);
-    switch (c) {
-    case ']':
-      if (peekStack == JsonScope.EMPTY_ARRAY) {
-        return peeked = PEEKED_END_ARRAY;
-      }
-      // fall-through to handle ",]"
-    case ';':
-    case ',':
-      // In lenient mode, a 0-length literal in an array means 'null'.
-      if (peekStack == JsonScope.EMPTY_ARRAY || peekStack == JsonScope.NONEMPTY_ARRAY) {
-        checkLenient();
-        pos--;
-        return peeked = PEEKED_NULL;
-      } else {
-        throw syntaxError("Unexpected value");
-      }
-    case '\'':
-      checkLenient();
-      return peeked = PEEKED_SINGLE_QUOTED;
-    case '"':
-      return peeked = PEEKED_DOUBLE_QUOTED;
-    case '[':
-      return peeked = PEEKED_BEGIN_ARRAY;
-    case '{':
-      return peeked = PEEKED_BEGIN_OBJECT;
-    default:
-      pos--; // Don't consume the first character in a literal value.
-    }
-
-    int result = peekKeyword();
-    if (result != PEEKED_NONE) {
-      return result;
-    }
-
-    result = peekNumber();
-    if (result != PEEKED_NONE) {
-      return result;
-    }
-
-    if (!isLiteral(buffer[pos])) {
-      throw syntaxError("Expected value");
-    }
-
-    checkLenient();
-    return peeked = PEEKED_UNQUOTED;
+    return -1;
   }
 
   private int peekKeyword() throws IOException {
