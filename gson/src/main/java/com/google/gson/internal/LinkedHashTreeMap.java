@@ -335,64 +335,101 @@ public final class LinkedHashTreeMap<K, V> extends AbstractMap<K, V> implements 
    * @param insert true if the node was unbalanced by an insert; false if it
    *     was by a removal.
    */
+  public static boolean[] rebalanceBranchCoverage = new boolean[30];
   private void rebalance(Node<K, V> unbalanced, boolean insert) {
+    if (unbalanced  == null) rebalanceBranchCoverage[29] = true;
     for (Node<K, V> node = unbalanced; node != null; node = node.parent) {
+      rebalanceBranchCoverage[0] = true;
       Node<K, V> left = node.left;
       Node<K, V> right = node.right;
       int leftHeight = left != null ? left.height : 0;
+      if (left != null) rebalanceBranchCoverage[1] = true;
+      else rebalanceBranchCoverage[2] = true;
       int rightHeight = right != null ? right.height : 0;
+      if (right != null) rebalanceBranchCoverage[3] = true;
+      else rebalanceBranchCoverage[4] = true;
 
       int delta = leftHeight - rightHeight;
       if (delta == -2) {
+        rebalanceBranchCoverage[5] = true;
         Node<K, V> rightLeft = right.left;
         Node<K, V> rightRight = right.right;
         int rightRightHeight = rightRight != null ? rightRight.height : 0;
+        if (rightRight != null) rebalanceBranchCoverage[6] = true;
+        else rebalanceBranchCoverage[7] = true;
         int rightLeftHeight = rightLeft != null ? rightLeft.height : 0;
+        if (rightLeft != null) rebalanceBranchCoverage[8] = true;
+        else rebalanceBranchCoverage[9] = true;
 
         int rightDelta = rightLeftHeight - rightRightHeight;
         if (rightDelta == -1 || (rightDelta == 0 && !insert)) {
+          rebalanceBranchCoverage[10] = true;
           rotateLeft(node); // AVL right right
         } else {
+          rebalanceBranchCoverage[11] = true;
           assert (rightDelta == 1);
           rotateRight(right); // AVL right left
           rotateLeft(node);
         }
         if (insert) {
+          rebalanceBranchCoverage[12] = true;
           break; // no further rotations will be necessary
+        }
+        else {
+          rebalanceBranchCoverage[13] = true;
         }
 
       } else if (delta == 2) {
+        rebalanceBranchCoverage[14] = true;
         Node<K, V> leftLeft = left.left;
         Node<K, V> leftRight = left.right;
         int leftRightHeight = leftRight != null ? leftRight.height : 0;
+        if (leftRight != null) rebalanceBranchCoverage[15] = true;
+        else rebalanceBranchCoverage[16] = true;
         int leftLeftHeight = leftLeft != null ? leftLeft.height : 0;
+        if (leftLeft != null) rebalanceBranchCoverage[17] = true;
+        else rebalanceBranchCoverage[18] = true;
 
         int leftDelta = leftLeftHeight - leftRightHeight;
         if (leftDelta == 1 || (leftDelta == 0 && !insert)) {
+          rebalanceBranchCoverage[19] = true;
           rotateRight(node); // AVL left left
         } else {
+          rebalanceBranchCoverage[20] = true;
           assert (leftDelta == -1);
           rotateLeft(left); // AVL left right
           rotateRight(node);
         }
         if (insert) {
+          rebalanceBranchCoverage[21] = true;
           break; // no further rotations will be necessary
         }
+        else rebalanceBranchCoverage[22] = true;
 
       } else if (delta == 0) {
+        rebalanceBranchCoverage[23] = true;
         node.height = leftHeight + 1; // leftHeight == rightHeight
         if (insert) {
+          rebalanceBranchCoverage[24] = true;
           break; // the insert caused balance, so rebalancing is done!
         }
+        else rebalanceBranchCoverage[25] = true;
 
       } else {
+        rebalanceBranchCoverage[26] = true;
         assert (delta == -1 || delta == 1);
         node.height = Math.max(leftHeight, rightHeight) + 1;
         if (!insert) {
+          rebalanceBranchCoverage[27] = true;
           break; // the height hasn't changed, so rebalancing is done!
         }
+        else rebalanceBranchCoverage[28] = true;
       }
     }
+    for (int i = 0; i < rebalanceBranchCoverage.length; i++) {
+      System.out.print(i + ": " + rebalanceBranchCoverage[i] + ", ");
+    }
+    System.out.println();
   }
 
   /**
