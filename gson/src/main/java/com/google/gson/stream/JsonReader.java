@@ -1309,6 +1309,7 @@ public class JsonReader implements Closeable {
    * {@code buffer[pos-1]}; this means the caller can always push back the
    * returned character by decrementing {@code pos}.
    */
+  public static boolean [] nextNonWhitespaceCover = new boolean [21];
   private int nextNonWhitespace(boolean throwOnEof) throws IOException {
     /*
      * This code uses ugly local variables 'p' and 'l' representing the 'pos'
@@ -1323,48 +1324,74 @@ public class JsonReader implements Closeable {
     int l = limit;
     while (true) {
       if (p == l) {
+        nextNonWhitespaceCover[0] = true;
         pos = p;
         if (!fillBuffer(1)) {
+          nextNonWhitespaceCover[1] = true;
           break;
+        } else {
+          nextNonWhitespaceCover[2] = true;
         }
-        p = pos;
-        l = limit;
+          p = pos;
+          l = limit;
+      }
+      else{
+        nextNonWhitespaceCover[3] = true;
       }
 
       int c = buffer[p++];
       if (c == '\n') {
+        nextNonWhitespaceCover[4] = true;
         lineNumber++;
         lineStart = p;
         continue;
       } else if (c == ' ' || c == '\r' || c == '\t') {
+        nextNonWhitespaceCover[5] = true;
         continue;
+      } else{
+        nextNonWhitespaceCover[6] = true;
       }
 
       if (c == '/') {
+        nextNonWhitespaceCover[7] = true;
         pos = p;
         if (p == l) {
+          nextNonWhitespaceCover[8] = true;
           pos--; // push back '/' so it's still in the buffer when this method returns
           boolean charsLoaded = fillBuffer(2);
           pos++; // consume the '/' again
           if (!charsLoaded) {
+            nextNonWhitespaceCover[9] = true;
+            for (int i = 0; i < nextNonWhitespaceCover.length; i++) {
+              System.out.print(i + " : " + nextNonWhitespaceCover[i] + " , ");
+            }
+            System.out.println();
             return c;
-          }
-        }
+          } else{ nextNonWhitespaceCover[10] = true;}
+
+        } else nextNonWhitespaceCover[11] = true;
 
         checkLenient();
         char peek = buffer[pos];
         switch (peek) {
         case '*':
+          nextNonWhitespaceCover[12] = true;
           // skip a /* c-style comment */
           pos++;
           if (!skipTo("*/")) {
+            nextNonWhitespaceCover[13] = true;
+            for (int i = 0; i < nextNonWhitespaceCover.length; i++) {
+              System.out.print(i + " : " + nextNonWhitespaceCover[i] + " , ");
+            }
+            System.out.println();
             throw syntaxError("Unterminated comment");
-          }
+          } else nextNonWhitespaceCover[14] = true;
           p = pos + 2;
           l = limit;
           continue;
 
         case '/':
+          nextNonWhitespaceCover[15] = true;
           // skip a // end-of-line comment
           pos++;
           skipToEndOfLine();
@@ -1373,9 +1400,15 @@ public class JsonReader implements Closeable {
           continue;
 
         default:
+          nextNonWhitespaceCover[16] = true;
+          for (int i = 0; i < nextNonWhitespaceCover.length; i++) {
+            System.out.print(i + " : " + nextNonWhitespaceCover[i] + " , ");
+          }
+          System.out.println();
           return c;
         }
       } else if (c == '#') {
+        nextNonWhitespaceCover[17] = true;
         pos = p;
         /*
          * Skip a # hash end-of-line comment. The JSON RFC doesn't
@@ -1387,15 +1420,31 @@ public class JsonReader implements Closeable {
         p = pos;
         l = limit;
       } else {
+        nextNonWhitespaceCover[18] = true;
         pos = p;
+        for (int i = 0; i < nextNonWhitespaceCover.length; i++) {
+          System.out.print(i + " : " + nextNonWhitespaceCover[i] + " , ");
+        }
+        System.out.println();
         return c;
       }
     }
     if (throwOnEof) {
+      nextNonWhitespaceCover[19] = true;
+      for (int i = 0; i < nextNonWhitespaceCover.length; i++) {
+        System.out.print(i + " : " + nextNonWhitespaceCover[i] + " , ");
+      }
+      System.out.println();
       throw new EOFException("End of input" + locationString());
-    } else {
+     } else {
+      nextNonWhitespaceCover[20] = true;
+      for (int i = 0; i < nextNonWhitespaceCover.length; i++) {
+        System.out.print(i + " : " + nextNonWhitespaceCover[i] + " , ");
+      }
+      System.out.println();
       return -1;
     }
+
   }
 
   private void checkLenient() throws IOException {
