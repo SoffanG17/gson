@@ -26,6 +26,18 @@ import java.math.BigInteger;
 @SuppressWarnings("resource")
 public final class JsonWriterTest extends TestCase {
 
+  public void testSetIndentEmpty() throws IOException {
+    StringWriter string1 = new StringWriter();
+    JsonWriter writer1 = new JsonWriter(string1);
+    writer1.setIndent("");
+    writer1.beginObject();
+    writer1.name("test").value(true);
+    writer1.endObject();
+    writer1.close();
+    System.out.println("String made: " + string1);
+    assertEquals("{\"test\":true}", string1.toString());
+  }
+
   public void testTopLevelValueTypes() throws IOException {
     StringWriter string1 = new StringWriter();
     JsonWriter writer1 = new JsonWriter(string1);
