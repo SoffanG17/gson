@@ -22,6 +22,10 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.util.Arrays;
 import junit.framework.TestCase;
+import junit.framework.TestResult;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.File;
 
 import static com.google.gson.stream.JsonToken.BEGIN_ARRAY;
 import static com.google.gson.stream.JsonToken.BEGIN_OBJECT;
@@ -68,7 +72,7 @@ public final class JsonReaderTest extends TestCase {
           if(JsonReader.doPflags[i]){
             writer.write("[" +i+ "]true ");
           }else{
-            writer.write("[" +i+ "]false ");
+            writer.write("[" +i+ "]false ");    
             missed++;
           }
         }
@@ -81,10 +85,7 @@ public final class JsonReaderTest extends TestCase {
     }
     
   }
-<<<<<<< Updated upstream
-  
-=======
->>>>>>> Stashed changes
+
   public void testUnterminatedArray() throws IOException{
     JsonReader reader = new JsonReader(reader("[false ["));
     reader.setLenient(true);
