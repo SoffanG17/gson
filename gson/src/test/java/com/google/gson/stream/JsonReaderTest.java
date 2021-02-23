@@ -81,7 +81,10 @@ public final class JsonReaderTest extends TestCase {
     }
     
   }
+<<<<<<< Updated upstream
   
+=======
+>>>>>>> Stashed changes
   public void testUnterminatedArray() throws IOException{
     JsonReader reader = new JsonReader(reader("[false ["));
     reader.setLenient(true);
