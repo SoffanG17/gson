@@ -43,7 +43,7 @@ public final class JsonReaderTest extends TestCase {
   
   @Override
   public void run(TestResult result) {
-    int len = 51;
+    int len = 52;
     if (JsonReader.covCount == 0){
       System.out.println("Init DIY coverage");
       
@@ -70,9 +70,9 @@ public final class JsonReaderTest extends TestCase {
         int missed = 0;
         for(int i=0; i<len; i++){
           if(JsonReader.doPflags[i]){
-            writer.write("true ");
+            writer.write("[" +i+ "]true ");
           }else{
-            writer.write("false ");
+            writer.write("[" +i+ "]false ");    
             missed++;
           }
         }
@@ -86,6 +86,20 @@ public final class JsonReaderTest extends TestCase {
     
   }
 
+  public void testUnterminatedArray() throws IOException{
+    JsonReader reader = new JsonReader(reader("[false ["));
+    reader.setLenient(true);
+    try{
+      
+      reader.beginArray();
+      reader.nextBoolean();
+      reader.peek();
+    }catch(com.google.gson.stream.MalformedJsonException e){
+      assertTrue(true);
+      return;
+    }
+    assertTrue(false);
+  }
 
   public void testReadArray() throws IOException {
     JsonReader reader = new JsonReader(reader("[true, true]"));
