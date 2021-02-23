@@ -1780,6 +1780,34 @@ public final class JsonReaderTest extends TestCase {
       fail();
     }
   }
+
+  /**
+   * The case where a comment starting with /* is split by the buffer. That is, the / is included in the first buffer
+   * fill and the * is included in the second buffer fill. This should still yield a proper comment.
+   */
+  public void testCommentAtBufferEdge() {
+    // Buffer size is private. Ideally it should be accessed here instead.
+    final int BUFFER_SIZE = 1024;
+    StringBuilder sb = new StringBuilder();
+    sb.append("/*");
+    for (int i = 0; i < BUFFER_SIZE-5; i++) {
+      sb.append("a");
+    }
+    sb.append("*/");
+    sb.append("/");
+    // The chars above should fill the buffer fully. The remaining below should require the buffer to be filled a second time.
+    sb.append("*kjdsnvndgvbhj*/{");
+    JsonReader reader = new JsonReader(reader(sb.toString()));
+    reader.setLenient(true);
+    try {
+      JsonToken retToken = reader.peek();
+      assertEquals(retToken, BEGIN_OBJECT);
+    }
+    catch (Exception e) {
+      fail(e.toString());
+    }
+  }
+
   /**
    * Returns a reader that returns one character at a time.
    */
