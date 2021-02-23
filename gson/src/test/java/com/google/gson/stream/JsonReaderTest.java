@@ -1765,6 +1765,22 @@ public final class JsonReaderTest extends TestCase {
   }
 
   /**
+   * Test if an unclosed comment results in an IOException being thrown
+   */
+  public void testCommentNotClosed(){
+    JsonReader reader = new JsonReader(reader(
+            "/**"  ));
+    try {
+      reader.setLenient(true);
+      reader.doPeek();
+      fail();
+    } catch (IOException expected) {
+      assertEquals("Unterminated comment at line 1 column 3 path $", expected.getMessage());
+    } catch(Exception e){
+      fail();
+    }
+  }
+  /**
    * Returns a reader that returns one character at a time.
    */
   private Reader reader(final String s) {
