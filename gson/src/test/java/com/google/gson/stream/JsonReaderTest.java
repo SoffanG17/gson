@@ -85,7 +85,9 @@ public final class JsonReaderTest extends TestCase {
     }
     
   }
-
+  /**
+   * Test that an unterminated Array throws the expected exception 
+   */
   public void testUnterminatedArray() throws IOException{
     JsonReader reader = new JsonReader(reader("[false ["));
     reader.setLenient(true);
