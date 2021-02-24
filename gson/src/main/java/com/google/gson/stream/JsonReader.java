@@ -222,6 +222,10 @@ public class JsonReader implements Closeable {
   private static final int NUMBER_CHAR_EXP_SIGN = 6;
   private static final int NUMBER_CHAR_EXP_DIGIT = 7;
 
+  public static int covCount; // FÖR flaggor
+  public static boolean[] doPflags; // FÖR Flagggor
+
+
   /** The input JSON. */
   private final Reader in;
 
@@ -639,6 +643,10 @@ public class JsonReader implements Closeable {
 
   private int peekNumber() throws IOException {
     // Like nextNonWhitespace, this uses locals 'p' and 'l' to save inner-loop field access.
+    if(doPflags == null){
+      doPflags = new boolean[35];
+    }
+
     char[] buffer = this.buffer;
     int p = pos;
     int l = limit;
@@ -653,89 +661,146 @@ public class JsonReader implements Closeable {
     charactersOfNumber:
     for (; true; i++) {
       if (p + i == l) {
+        doPflags[0] = true; // branchID 0
         if (i == buffer.length) {
+          doPflags[1] = true; // branchID 1
           // Though this looks like a well-formed number, it's too long to continue reading. Give up
           // and let the application handle this as an unquoted literal.
           return PEEKED_NONE;
         }
+        else {
+          doPflags[2] = true; // branchID 2
+        }
         if (!fillBuffer(i + 1)) {
+          doPflags[3] = true; // branchID 3
           break;
+        }
+        else {
+          doPflags[4] = true; // branchID 4
         }
         p = pos;
         l = limit;
+      }
+      else {
+        doPflags[5] = true; // branchID 5
       }
 
       char c = buffer[p + i];
       switch (c) {
       case '-':
+        doPflags[6] = true; // branchID 6
         if (last == NUMBER_CHAR_NONE) {
+          doPflags[7] = true; // branchID 7
           negative = true;
           last = NUMBER_CHAR_SIGN;
           continue;
         } else if (last == NUMBER_CHAR_EXP_E) {
+          doPflags[8] = true; // branchID 8
           last = NUMBER_CHAR_EXP_SIGN;
           continue;
+        }
+        else {
+          doPflags[9] = true; // branchID 9
         }
         return PEEKED_NONE;
 
       case '+':
+        doPflags[10] = true; // branchID 10
         if (last == NUMBER_CHAR_EXP_E) {
+          doPflags[11] = true; // branchID 11
           last = NUMBER_CHAR_EXP_SIGN;
           continue;
+        }
+        else {
+          doPflags[12] = true; // branchID 12
         }
         return PEEKED_NONE;
 
       case 'e':
+        doPflags[13] = true; // branchID 13
       case 'E':
+        doPflags[14] = true; // branchID 14
         if (last == NUMBER_CHAR_DIGIT || last == NUMBER_CHAR_FRACTION_DIGIT) {
+          doPflags[15] = true; // branchID 15
           last = NUMBER_CHAR_EXP_E;
           continue;
+        }
+        else {
+          doPflags[16] = true; // branchID 16
         }
         return PEEKED_NONE;
 
       case '.':
+        doPflags[17] = true; // branchID 17
         if (last == NUMBER_CHAR_DIGIT) {
+          doPflags[18] = true; // branchID 18
           last = NUMBER_CHAR_DECIMAL;
           continue;
+        }
+        else {
+          doPflags[19] = true; // branchID 19
         }
         return PEEKED_NONE;
 
       default:
+        doPflags[20] = true; // branchID 20
         if (c < '0' || c > '9') {
+          doPflags[21] = true; // branchID 21
           if (!isLiteral(c)) {
+            doPflags[22] = true; // branchID 22
             break charactersOfNumber;
+          }
+          else {
+            doPflags[23] = true; // branchID 23
           }
           return PEEKED_NONE;
         }
+        else {
+          doPflags[24] = true; // branchID 24
+        }
         if (last == NUMBER_CHAR_SIGN || last == NUMBER_CHAR_NONE) {
+          doPflags[25] = true; // branchID 25
           value = -(c - '0');
           last = NUMBER_CHAR_DIGIT;
         } else if (last == NUMBER_CHAR_DIGIT) {
+          doPflags[26] = true; // branchID 26
           if (value == 0) {
+            doPflags[27] = true; // branchID 27
             return PEEKED_NONE; // Leading '0' prefix is not allowed (since it could be octal).
+          }
+          else {
+            doPflags[28] = true; // branchID 28
           }
           long newValue = value * 10 - (c - '0');
           fitsInLong &= value > MIN_INCOMPLETE_INTEGER
               || (value == MIN_INCOMPLETE_INTEGER && newValue < value);
           value = newValue;
         } else if (last == NUMBER_CHAR_DECIMAL) {
+          doPflags[29] = true; // branchID 29
           last = NUMBER_CHAR_FRACTION_DIGIT;
         } else if (last == NUMBER_CHAR_EXP_E || last == NUMBER_CHAR_EXP_SIGN) {
+          doPflags[30] = true; // branchID 30
           last = NUMBER_CHAR_EXP_DIGIT;
+        }
+        else{
+          doPflags[31] = true; // branchID 31
         }
       }
     }
 
     // We've read a complete number. Decide if it's a PEEKED_LONG or a PEEKED_NUMBER.
     if (last == NUMBER_CHAR_DIGIT && fitsInLong && (value != Long.MIN_VALUE || negative) && (value!=0 || false==negative)) {
+      doPflags[32] = true; // branchID 32
       peekedLong = negative ? value : -value;
       pos += i;
       return peeked = PEEKED_LONG;
     } else if (last == NUMBER_CHAR_DIGIT || last == NUMBER_CHAR_FRACTION_DIGIT
         || last == NUMBER_CHAR_EXP_DIGIT) {
+      doPflags[33] = true; // branchID 33
       peekedNumberLength = i;
       return peeked = PEEKED_NUMBER;
     } else {
+      doPflags[34] = true; // branchID 34
       return PEEKED_NONE;
     }
   }

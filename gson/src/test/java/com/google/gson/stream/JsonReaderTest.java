@@ -16,12 +16,10 @@
 
 package com.google.gson.stream;
 
-import java.io.EOFException;
-import java.io.IOException;
-import java.io.Reader;
-import java.io.StringReader;
+import java.io.*;
 import java.util.Arrays;
 import junit.framework.TestCase;
+import junit.framework.TestResult;
 
 import static com.google.gson.stream.JsonToken.BEGIN_ARRAY;
 import static com.google.gson.stream.JsonToken.BEGIN_OBJECT;
@@ -35,6 +33,50 @@ import static com.google.gson.stream.JsonToken.STRING;
 
 @SuppressWarnings("resource")
 public final class JsonReaderTest extends TestCase {
+
+  @Override
+  public void run(TestResult result) {
+    int len = 35;
+    if (JsonReader.covCount == 0){
+      System.out.println("Init DIY coverage");
+
+      JsonReader.doPflags = new boolean[len];
+      for(int i=0; i<len; i++){
+        JsonReader.doPflags[i] = false;
+      }
+      JsonReader.covCount++;
+    }else{
+      JsonReader.covCount++;
+    }
+
+    super.run(result);
+
+    if(JsonReader.covCount == 120){
+      try{
+        System.out.println("Closing DIY coverage");
+        File file = new File("DiyCov.txt");
+        if (!file.exists()) {
+          file.createNewFile();
+        }
+        BufferedWriter writer = new BufferedWriter(new FileWriter(file, false));
+        for(int i=0; i<len; i++){
+          writer.write("id: ");
+          writer.write(String.valueOf(i)+"\t:\t");
+          if(JsonReader.doPflags[i]){
+            writer.write("true");
+          }else{
+            writer.write("false");
+          }
+          writer.write("\n");
+        }
+        writer.write("\nDone!");
+        writer.flush();
+        writer.close();
+      }catch(Exception e){}
+    }
+
+  }
+
   public void testReadArray() throws IOException {
     JsonReader reader = new JsonReader(reader("[true, true]"));
     reader.beginArray();
