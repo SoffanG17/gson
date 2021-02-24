@@ -25,7 +25,9 @@ import java.math.BigInteger;
 
 @SuppressWarnings("resource")
 public final class JsonWriterTest extends TestCase {
-
+/**
+ * Setting indentation to "" works without exceptions
+ */
   public void testSetIndentEmpty() throws IOException {
     StringWriter string1 = new StringWriter();
     JsonWriter writer1 = new JsonWriter(string1);
