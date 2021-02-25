@@ -10,6 +10,8 @@ import java.text.ParsePosition;
 import java.util.*;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+import static org.junit.Assert.assertTrue;
 
 public class ISO8601UtilsTest {
 
@@ -111,5 +113,24 @@ public class ISO8601UtilsTest {
         Date date = ISO8601Utils.parse(dateStr, new ParsePosition(0));
         Date expectedDate = new GregorianCalendar(2018, Calendar.JUNE, 25).getTime();
         assertEquals(expectedDate, date);
+    }
+
+    /**
+     * A date string followed by an illegal character is interpreted as an illegal time zone indicator.
+     * This should result in a parse exception being thrown.
+     */
+    @Test
+    public void testDateParseInvalidChar() {
+        String dateStr = "20180625p";
+        try {
+            ISO8601Utils.parse(dateStr, new ParsePosition(0));
+            fail("No exception was thrown!");
+        }
+        catch (ParseException e) {
+            assertTrue(e.getMessage().contains("Invalid time zone indicator '"));
+        }
+        catch (Exception e) {
+            fail(e.toString());
+        }
     }
 }
