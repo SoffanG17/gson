@@ -100,4 +100,16 @@ public class ISO8601UtilsTest {
             Locale.setDefault(defaultLocale);
         }
     }
+
+    /**
+     * A date string of the form yyyymmdd should work.
+     * @throws ParseException
+     */
+    @Test
+    public void testDateParseDateNoSeparators() throws ParseException {
+        String dateStr = "20180625";
+        Date date = ISO8601Utils.parse(dateStr, new ParsePosition(0));
+        Date expectedDate = new GregorianCalendar(2018, Calendar.JUNE, 25).getTime();
+        assertEquals(expectedDate, date);
+    }
 }
