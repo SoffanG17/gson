@@ -168,4 +168,60 @@ public class ISO8601UtilsTest {
             fail(e.toString());
         }
     }
+
+    /**
+     * The milliseconds should be allowed to be specified with a single digit, and then be padded with two zeros.
+     * For example, the substring "T01:02:03.7" of a date should be interpreted as hour 1, minute 2, second 3, and
+     * millisecond 700.
+     * Beware that the error print out might not include the number of milliseconds when comparing dates, making them
+     * seem identical when in fact they differ at the millisecond level.
+     * @throws ParseException
+     */
+    @Test
+    public void testDateParseOneDigitMillisecond() throws ParseException {
+        String dateStr = "2018-06-25T01:02:03.7Z";
+        TimeZone defaultTimeZone = TimeZone.getDefault();
+        TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+        Locale defaultLocale = Locale.getDefault();
+        Locale.setDefault(Locale.US);
+        try {
+            Date date = ISO8601Utils.parse(dateStr, new ParsePosition(0));
+            Calendar calendar = new GregorianCalendar(2018, Calendar.JUNE, 25, 1, 2, 3);
+            calendar.set(Calendar.MILLISECOND, 700);
+            Date expectedDate = calendar.getTime();
+            assertEquals(expectedDate, date);
+        }
+        finally {
+            TimeZone.setDefault(defaultTimeZone);
+            Locale.setDefault(defaultLocale);
+        }
+    }
+
+    /**
+     * The milliseconds should be allowed to be specified with two digits, and then be padded with one zero.
+     * For example, the substring "T01:02:03.73" of a date should be interpreted as hour 1, minute 2, second 3, and
+     * millisecond 730.
+     * Beware that the error print out might not include the number of milliseconds when comparing dates, making them
+     * seem identical when in fact they differ at the millisecond level.
+     * @throws ParseException
+     */
+    @Test
+    public void testDateParseTwoDigitsMillisecond() throws ParseException {
+        String dateStr = "2018-06-25T01:02:03.73Z";
+        TimeZone defaultTimeZone = TimeZone.getDefault();
+        TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+        Locale defaultLocale = Locale.getDefault();
+        Locale.setDefault(Locale.US);
+        try {
+            Date date = ISO8601Utils.parse(dateStr, new ParsePosition(0));
+            Calendar calendar = new GregorianCalendar(2018, Calendar.JUNE, 25, 1, 2, 3);
+            calendar.set(Calendar.MILLISECOND, 730);
+            Date expectedDate = calendar.getTime();
+            assertEquals(expectedDate, date);
+        }
+        finally {
+            TimeZone.setDefault(defaultTimeZone);
+            Locale.setDefault(defaultLocale);
+        }
+    }
 }
