@@ -133,4 +133,39 @@ public class ISO8601UtilsTest {
             fail(e.toString());
         }
     }
+
+    /**
+     * If time is included in the date time string, then a time zone must also be included. Otherwise an exception
+     * should be thrown.
+     * @throws ParseException
+     */
+    @Test
+    public void testDateParseTimeWithoutTimeZone() throws ParseException {
+        // Double check that the date time string is considered legal. Later the time zone char is removed.
+        String dateStr = "20180625T0102Z";
+        TimeZone defaultTimeZone = TimeZone.getDefault();
+        TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+        Locale defaultLocale = Locale.getDefault();
+        Locale.setDefault(Locale.US);
+        try {
+            Date date = ISO8601Utils.parse(dateStr, new ParsePosition(0));
+            Date expectedDate = new GregorianCalendar(2018, Calendar.JUNE, 25, 1, 2).getTime();
+            assertEquals(expectedDate, date);
+        }
+        finally {
+            TimeZone.setDefault(defaultTimeZone);
+            Locale.setDefault(defaultLocale);
+        }
+        dateStr = dateStr.substring(0, dateStr.length() - 1);
+        try {
+            ISO8601Utils.parse(dateStr, new ParsePosition(0));
+            fail("No exception was thrown!");
+        }
+        catch (ParseException e) {
+            assertTrue(e.getMessage().contains("No time zone indicator"));
+        }
+        catch (Exception e) {
+            fail(e.toString());
+        }
+    }
 }
