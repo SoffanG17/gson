@@ -75,14 +75,22 @@ public final class JsonReaderTest extends TestCase {
       }catch(Exception e){}
     }
   }
-
+  /**
+   * This tests JsonReader to return PEEKED_UNQUOTED code.
+   * [1-5] will interpret 1-5 as a number.
+   * The object must say that this is not a correct syntax for a json number and that it is then interpreted as a string that does not have quotation marks
+   */
   public void testBrancCoverage9() throws IOException {
     JsonReader reader = new JsonReader(reader("[1-5]"));
     reader.setLenient(true);
     reader.beginArray();
     assertEquals(10, reader.doPeek());
   }
-
+  /**
+   * This tests JsonReader to return NUMBER code. And that the read number is 1e+5
+   * [1e+5] will interpret 1-5 as a number.
+   * The object must say that this is number and that it is  interpreted 1e+5
+   */
   public void testBrancCoverage10() throws IOException {
     JsonReader reader = new JsonReader(reader("[1e+5]"));
     reader.setLenient(false);
@@ -90,13 +98,24 @@ public final class JsonReaderTest extends TestCase {
     assertEquals(NUMBER, reader.peek());
     assertEquals("1e+5", reader.nextString());
   }
+  /**
+   * This tests JsonReader to return PEEKED_UNQUOTED code.
+   * [1+5] will interpret 1+5 as a number.
+   * The object must say that this is not a correct syntax for a json number and that it is then interpreted as a string that does not have quotation marks
+   * Plus characters is not allowed if it's not combined with a e number.
+   */
   public void testBrancCoverage12() throws IOException {
     JsonReader reader = new JsonReader(reader("[1+5]"));
     reader.setLenient(true);
     reader.beginArray();
     assertEquals(10,reader.doPeek());
   }
-
+  /**
+   * This tests JsonReader to return PEEKED_UNQUOTED code.
+   * [027] will interpret 027 as a number.
+   * The object must say that this is not a correct syntax for a json number and that it is then interpreted as a string that does not have quotation marks.
+   * A number is not allowed to have a leading 0.
+   */
   public void testBrancCoverage27() throws IOException {
     JsonReader reader = new JsonReader(reader("027"));
     reader.setLenient(true);
