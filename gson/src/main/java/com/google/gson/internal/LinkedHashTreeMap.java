@@ -328,6 +328,47 @@ public final class LinkedHashTreeMap<K, V> extends AbstractMap<K, V> implements 
     }
   }
 
+    /**
+     * Hepler method to rebalance. Handles the case where the height difference between the 2 subtrees of originalRoot
+     * is 2
+     * @param originalRoot the node that is being rebalanced
+     * @param left whether the left subtree has the higher height or not. If false the right subtree is higher.
+     * @param insert whether the rebalance was triggered by an insertion or deletion. Same parameter as from the
+     *               method rebalance.
+     */
+  private void rebalanceHeightDifferenceTwo(Node<K, V> originalRoot, boolean left, boolean insert) {
+      Node<K, V> heavierSideRoot = left ? originalRoot.left : originalRoot.right;
+      Node<K, V> nodeLeft = heavierSideRoot.left;
+      Node<K, V> nodeRight = heavierSideRoot.right;
+      int rightHeight = nodeRight != null ? nodeRight.height : 0;
+      int leftHeight = nodeLeft != null ? nodeLeft.height : 0;
+
+      int delta = leftHeight - rightHeight;
+      if (delta == 0 && !insert) {
+          if (left) rotateRight(originalRoot); // AVL left left
+          else rotateLeft(originalRoot); // AVL right right
+      }
+      else if (delta == -1) {
+          if (left) {
+              rotateLeft(heavierSideRoot); // AVL left right
+              rotateRight(originalRoot);
+          }
+          else {
+              rotateLeft(originalRoot); // AVL right right
+          }
+      }
+      else {
+          assert (delta == 1);
+          if (left) {
+              rotateRight(originalRoot); // AVL left left
+          }
+          else {
+              rotateRight(heavierSideRoot); // AVL right left
+              rotateLeft(originalRoot);
+          }
+      }
+  }
+
   /**
    * Rebalances the tree by making any AVL rotations necessary between the
    * newly-unbalanced node and the tree's root.
@@ -336,6 +377,7 @@ public final class LinkedHashTreeMap<K, V> extends AbstractMap<K, V> implements 
    *     was by a removal.
    */
   private void rebalance(Node<K, V> unbalanced, boolean insert) {
+    boolean indicator; // If it is set to the same value as insert then the tree is balanced.
     for (Node<K, V> node = unbalanced; node != null; node = node.parent) {
       Node<K, V> left = node.left;
       Node<K, V> right = node.right;
@@ -343,55 +385,24 @@ public final class LinkedHashTreeMap<K, V> extends AbstractMap<K, V> implements 
       int rightHeight = right != null ? right.height : 0;
 
       int delta = leftHeight - rightHeight;
-      if (delta == -2) {
-        Node<K, V> rightLeft = right.left;
-        Node<K, V> rightRight = right.right;
-        int rightRightHeight = rightRight != null ? rightRight.height : 0;
-        int rightLeftHeight = rightLeft != null ? rightLeft.height : 0;
-
-        int rightDelta = rightLeftHeight - rightRightHeight;
-        if (rightDelta == -1 || (rightDelta == 0 && !insert)) {
-          rotateLeft(node); // AVL right right
-        } else {
-          assert (rightDelta == 1);
-          rotateRight(right); // AVL right left
-          rotateLeft(node);
-        }
-        if (insert) {
-          break; // no further rotations will be necessary
-        }
-
-      } else if (delta == 2) {
-        Node<K, V> leftLeft = left.left;
-        Node<K, V> leftRight = left.right;
-        int leftRightHeight = leftRight != null ? leftRight.height : 0;
-        int leftLeftHeight = leftLeft != null ? leftLeft.height : 0;
-
-        int leftDelta = leftLeftHeight - leftRightHeight;
-        if (leftDelta == 1 || (leftDelta == 0 && !insert)) {
-          rotateRight(node); // AVL left left
-        } else {
-          assert (leftDelta == -1);
-          rotateLeft(left); // AVL left right
-          rotateRight(node);
-        }
-        if (insert) {
-          break; // no further rotations will be necessary
-        }
-
-      } else if (delta == 0) {
+      if (delta == -2) { //right
+          rebalanceHeightDifferenceTwo(node, false, insert);
+          indicator = true;
+      }
+      else if (delta == 2) { //left
+          rebalanceHeightDifferenceTwo(node, true, insert);
+          indicator = true;
+      }
+      else if (delta == 0) {
         node.height = leftHeight + 1; // leftHeight == rightHeight
-        if (insert) {
-          break; // the insert caused balance, so rebalancing is done!
-        }
-
-      } else {
+        indicator = true;
+      }
+      else {
         assert (delta == -1 || delta == 1);
         node.height = Math.max(leftHeight, rightHeight) + 1;
-        if (!insert) {
-          break; // the height hasn't changed, so rebalancing is done!
-        }
+        indicator = false;
       }
+      if (insert == indicator) break;
     }
   }
 
