@@ -52,6 +52,33 @@ public final class JsonArrayTest extends TestCase {
     assertTrue(false);
   }
 
+  /**
+   * Test that the double from getAsString() is returned correctly
+   */
+  public void testGetAsString(){
+    JsonArray jArray = new JsonArray();
+    String str = "Lorem ips";
+    jArray.add(str);
+
+    assertEquals(str, jArray.getAsString());
+  }
+  /**
+   * getAsString throws exception as expected
+   */
+  public void testGetAsStringIllegalState(){
+    JsonArray jArray = new JsonArray();
+    String str = "Lorem ips";
+    jArray.add(str);
+    jArray.add(str);
+    try {
+      jArray.getAsString();
+    } catch (IllegalStateException e) {
+      assertTrue(true);
+      return;
+    }
+    assertTrue(false);
+  }
+
 
 
   public void testEqualsOnEmptyArray() {
