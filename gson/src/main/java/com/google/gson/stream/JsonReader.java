@@ -1332,28 +1332,78 @@ public class JsonReader implements Closeable {
       }
 
       int c = buffer[p++];
-      if (c == '\n') {
-        lineNumber++;
-        lineStart = p;
+      //Refactoring, calls a function that handles when c is '/n', '#' or '/'
+      int [] b = handleWhitespaceAndComment(c,p,l);
+      if(b[0]==2){
+        p = b[1];
+        l = b[2];
         continue;
-      } else if (c == ' ' || c == '\r' || c == '\t') {
-        continue;
+      } else if(b[0]==1){
+        return c;
+      } else {
+        p = b[1];
+        l = b[2];
+      }
+    }
+    if (throwOnEof) {
+      throw new EOFException("End of input" + locationString());
+    } else {
+      return -1;
+    }
+  }
+
+  /**
+   * The function handles the cases when the character is a '\n', '/' or '#'.
+   * @param c
+   * @param p
+   * @param l
+   * @return
+   * @throws IOException
+   */
+  private int [] handleWhitespaceAndComment(int c, int p, int l) throws IOException {
+    if (c == '\n') {
+      lineNumber++;
+      lineStart = p;
+      int[] a = new int[] {2,p,l};
+      return a;
+    } else if (c == ' ' || c == '\r' || c == '\t') {
+      int[] a = new int[] {2,p,l};
+      return a;
+    }
+
+    if (c == '/' || c=='#') {
+      return handleComments(c, p, l);
+    } else {
+      pos = p;
+      int[] a = new int[] {1,0,0};
+      return a;
+    }
+  }
+
+  /**
+   * The function handles the cases when the character is '/' or '#'.
+   * @param c
+   * @param p
+   * @param l
+   * @return
+   * @throws IOException
+   */
+  private int [] handleComments(int c, int p, int l) throws IOException {
+    if (c == '/') {
+      pos = p;
+      if (p == l) {
+        pos--; // push back '/' so it's still in the buffer when this method returns
+        boolean charsLoaded = fillBuffer(2);
+        pos++; // consume the '/' again
+        if (!charsLoaded) {
+          int[] a = new int[] {1,p,l};
+          return a;
+        }
       }
 
-      if (c == '/') {
-        pos = p;
-        if (p == l) {
-          pos--; // push back '/' so it's still in the buffer when this method returns
-          boolean charsLoaded = fillBuffer(2);
-          pos++; // consume the '/' again
-          if (!charsLoaded) {
-            return c;
-          }
-        }
-
-        checkLenient();
-        char peek = buffer[pos];
-        switch (peek) {
+      checkLenient();
+      char peek = buffer[pos];
+      switch (peek) {
         case '*':
           // skip a /* c-style comment */
           pos++;
@@ -1362,7 +1412,8 @@ public class JsonReader implements Closeable {
           }
           p = pos + 2;
           l = limit;
-          continue;
+          int[] a = new int[] {2,p,l};
+          return a;
 
         case '/':
           // skip a // end-of-line comment
@@ -1370,31 +1421,25 @@ public class JsonReader implements Closeable {
           skipToEndOfLine();
           p = pos;
           l = limit;
-          continue;
-
+          a = new int[] {2,p,l};
+          return a;
         default:
-          return c;
-        }
-      } else if (c == '#') {
-        pos = p;
-        /*
-         * Skip a # hash end-of-line comment. The JSON RFC doesn't
-         * specify this behaviour, but it's required to parse
-         * existing documents. See http://b/2571423.
-         */
-        checkLenient();
-        skipToEndOfLine();
-        p = pos;
-        l = limit;
-      } else {
-        pos = p;
-        return c;
+          a = new int[] {1,pos,l};
+          return a;
       }
-    }
-    if (throwOnEof) {
-      throw new EOFException("End of input" + locationString());
     } else {
-      return -1;
+      pos = p;
+      /*
+       * Skip a # hash end-of-line comment. The JSON RFC doesn't
+       * specify this behaviour, but it's required to parse
+       * existing documents. See http://b/2571423.
+       */
+      checkLenient();
+      skipToEndOfLine();
+      p = pos;
+      l = limit;
+      int[] a = new int[] {0,p,l};
+      return a;
     }
   }
 
