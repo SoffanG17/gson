@@ -51,10 +51,10 @@ public final class JsonReaderTest extends TestCase {
 
     super.run(result);
 
-    if(JsonReader.covCount == 120){
+    if(JsonReader.covCount == 124){
       try{
         System.out.println("Closing DIY coverage");
-        File file = new File("DiyCov.txt");
+        File file = new File("DiyCov_newBranchCoverage.txt");
         if (!file.exists()) {
           file.createNewFile();
         }
@@ -74,7 +74,33 @@ public final class JsonReaderTest extends TestCase {
         writer.close();
       }catch(Exception e){}
     }
+  }
 
+  public void testBrancCoverage9() throws IOException {
+    JsonReader reader = new JsonReader(reader("[1-5]"));
+    reader.setLenient(true);
+    reader.beginArray();
+    assertEquals(10, reader.doPeek());
+  }
+
+  public void testBrancCoverage10() throws IOException {
+    JsonReader reader = new JsonReader(reader("[1e+5]"));
+    reader.setLenient(false);
+    reader.beginArray();
+    assertEquals(NUMBER, reader.peek());
+    assertEquals("1e+5", reader.nextString());
+  }
+  public void testBrancCoverage12() throws IOException {
+    JsonReader reader = new JsonReader(reader("[1+5]"));
+    reader.setLenient(true);
+    reader.beginArray();
+    assertEquals(10,reader.doPeek());
+  }
+
+  public void testBrancCoverage27() throws IOException {
+    JsonReader reader = new JsonReader(reader("027"));
+    reader.setLenient(true);
+    assertEquals(10, reader.doPeek());
   }
 
   public void testReadArray() throws IOException {
