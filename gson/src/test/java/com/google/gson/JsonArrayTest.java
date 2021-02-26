@@ -25,6 +25,35 @@ import com.google.gson.common.MoreAsserts;
  */
 public final class JsonArrayTest extends TestCase {
 
+  /**
+   * Test that the double from getAsDouble() is returned correctly
+   */
+  public void testGetAsDouble(){
+    JsonArray jArray = new JsonArray();
+    double num = 666.6;
+    jArray.add(num);
+
+    assertEquals(num, jArray.getAsDouble());
+  }
+  /**
+   * getAsDouble throws exception as expected
+   */
+  public void testGetAsDoubleIllegalState(){
+    JsonArray jArray = new JsonArray();
+    double num = 666.6;
+    jArray.add(num);
+    jArray.add(num);
+    try {
+      jArray.getAsDouble();
+    } catch (IllegalStateException e) {
+      assertTrue(true);
+      return;
+    }
+    assertTrue(false);
+  }
+
+
+
   public void testEqualsOnEmptyArray() {
     MoreAsserts.assertEqualsAndHashCode(new JsonArray(), new JsonArray());
   }
