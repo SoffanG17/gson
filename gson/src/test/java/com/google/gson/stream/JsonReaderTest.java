@@ -22,6 +22,10 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.util.Arrays;
 import junit.framework.TestCase;
+import junit.framework.TestResult;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.File;
 
 import static com.google.gson.stream.JsonToken.BEGIN_ARRAY;
 import static com.google.gson.stream.JsonToken.BEGIN_OBJECT;
@@ -35,6 +39,70 @@ import static com.google.gson.stream.JsonToken.STRING;
 
 @SuppressWarnings("resource")
 public final class JsonReaderTest extends TestCase {
+
+  
+  @Override
+  public void run(TestResult result) {
+    int len = 52;
+    if (JsonReader.covCount == 0){
+      System.out.println("Init DIY coverage");
+      
+      JsonReader.doPflags = new boolean[len];
+      for(int i=0; i<len; i++){
+        JsonReader.doPflags[i] = false;
+      }
+      JsonReader.covCount++;
+    }else{
+      JsonReader.covCount++;
+      //System.out.println("Test nr: " + JsonReader.covCount);
+    }
+
+    super.run(result);
+
+    if(JsonReader.covCount == 120){
+      try{
+        System.out.println("Closing DIY coverage");
+        File file = new File("DiyCov.txt");
+        if (!file.exists()) {
+          file.createNewFile();
+       }
+        BufferedWriter writer = new BufferedWriter(new FileWriter(file, false));
+        int missed = 0;
+        for(int i=0; i<len; i++){
+          if(JsonReader.doPflags[i]){
+            writer.write("[" +i+ "]true ");
+          }else{
+            writer.write("[" +i+ "]false ");    
+            missed++;
+          }
+        }
+        double coverage = 1.0 - (double) missed / (double)len;
+        writer.write("\nCoverage: " + coverage * 100.0 + "%");
+        writer.write("\nDone!\n");
+        writer.flush();
+        writer.close();
+      }catch(Exception e){}
+    }
+    
+  }
+  /**
+   * Test that an unterminated Array throws the expected exception 
+   */
+  public void testUnterminatedArray() throws IOException{
+    JsonReader reader = new JsonReader(reader("[false ["));
+    reader.setLenient(true);
+    try{
+      
+      reader.beginArray();
+      reader.nextBoolean();
+      reader.peek();
+    }catch(com.google.gson.stream.MalformedJsonException e){
+      assertTrue(true);
+      return;
+    }
+    assertTrue(false);
+  }
+
   public void testReadArray() throws IOException {
     JsonReader reader = new JsonReader(reader("[true, true]"));
     reader.beginArray();

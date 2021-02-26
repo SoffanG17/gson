@@ -23,6 +23,9 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.Arrays;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.File;
 
 /**
  * Reads a JSON (<a href="http://www.ietf.org/rfc/rfc7159.txt">RFC 7159</a>)
@@ -419,6 +422,7 @@ public class JsonReader implements Closeable {
    * Returns the type of the next token without consuming it.
    */
   public JsonToken peek() throws IOException {
+
     int p = peeked;
     if (p == PEEKED_NONE) {
       p = doPeek();
@@ -456,137 +460,249 @@ public class JsonReader implements Closeable {
       throw new AssertionError();
     }
   }
-
+  public static int covCount;
+  public static boolean[] doPflags;
   int doPeek() throws IOException {
+    if(doPflags == null){
+      doPflags = new boolean[51];
+    }
     int peekStack = stack[stackSize - 1];
     if (peekStack == JsonScope.EMPTY_ARRAY) {
+      //#0
+      doPflags[0] = true;
       stack[stackSize - 1] = JsonScope.NONEMPTY_ARRAY;
     } else if (peekStack == JsonScope.NONEMPTY_ARRAY) {
+      //#1
+      doPflags[1] = true;
       // Look for a comma before the next element.
       int c = nextNonWhitespace(true);
       switch (c) {
       case ']':
+      //#2
+      doPflags[2] = true;
         return peeked = PEEKED_END_ARRAY;
       case ';':
+      //#3
+      doPflags[3] = true;
         checkLenient(); // fall-through
       case ',':
+      //#4
+      doPflags[4] = true;
         break;
       default:
+      //#5
+      doPflags[5] = true;
         throw syntaxError("Unterminated array");
       }
     } else if (peekStack == JsonScope.EMPTY_OBJECT || peekStack == JsonScope.NONEMPTY_OBJECT) {
+      //#6
+      doPflags[6] = true;
       stack[stackSize - 1] = JsonScope.DANGLING_NAME;
       // Look for a comma before the next element.
       if (peekStack == JsonScope.NONEMPTY_OBJECT) {
+        //#7
+        doPflags[7] = true;
         int c = nextNonWhitespace(true);
         switch (c) {
         case '}':
+        //#8
+        doPflags[8] = true;
           return peeked = PEEKED_END_OBJECT;
         case ';':
+        //#9
+        doPflags[9] = true;
           checkLenient(); // fall-through
         case ',':
+        //#10
+        doPflags[10] = true;
           break;
         default:
+        //#11
+        doPflags[11] = true;
           throw syntaxError("Unterminated object");
         }
       }
       int c = nextNonWhitespace(true);
       switch (c) {
       case '"':
+      //#12
+      doPflags[12] = true;
         return peeked = PEEKED_DOUBLE_QUOTED_NAME;
       case '\'':
+      //#13
+      doPflags[13] = true;
         checkLenient();
         return peeked = PEEKED_SINGLE_QUOTED_NAME;
       case '}':
+      //#14
+      doPflags[14] = true;
         if (peekStack != JsonScope.NONEMPTY_OBJECT) {
+          //#15
+          doPflags[15] = true;
           return peeked = PEEKED_END_OBJECT;
         } else {
+          //#16
+          doPflags[16] = true;
           throw syntaxError("Expected name");
         }
       default:
+      //#17
+      doPflags[17] = true;
         checkLenient();
         pos--; // Don't consume the first character in an unquoted string.
         if (isLiteral((char) c)) {
+          //#18
+          doPflags[18] = true;
           return peeked = PEEKED_UNQUOTED_NAME;
         } else {
+          //#19
+          doPflags[19] = true;
           throw syntaxError("Expected name");
         }
       }
     } else if (peekStack == JsonScope.DANGLING_NAME) {
+      //#20
+      doPflags[20] = true;
       stack[stackSize - 1] = JsonScope.NONEMPTY_OBJECT;
       // Look for a colon before the value.
       int c = nextNonWhitespace(true);
       switch (c) {
       case ':':
+        //#21
+        doPflags[21] = true;
         break;
       case '=':
+        //#22
+        doPflags[22] = true;
         checkLenient();
         if ((pos < limit || fillBuffer(1)) && buffer[pos] == '>') {
+          //#23
+          doPflags[23] = true;
           pos++;
+        }else{
+          //#24
+          doPflags[24] = true;
         }
         break;
       default:
+        //#25
+        doPflags[25] = true;
         throw syntaxError("Expected ':'");
       }
     } else if (peekStack == JsonScope.EMPTY_DOCUMENT) {
+      //#26
+      doPflags[26] = true;
       if (lenient) {
+        //#27
+        doPflags[27] = true;
         consumeNonExecutePrefix();
+      }else{
+        //#28
+        doPflags[28] = true;
       }
       stack[stackSize - 1] = JsonScope.NONEMPTY_DOCUMENT;
     } else if (peekStack == JsonScope.NONEMPTY_DOCUMENT) {
+      //#29
+      doPflags[29] = true;
       int c = nextNonWhitespace(false);
       if (c == -1) {
+        //#30
+        doPflags[30] = true;
         return peeked = PEEKED_EOF;
       } else {
+        //#31
+        doPflags[31] = true;
         checkLenient();
         pos--;
       }
     } else if (peekStack == JsonScope.CLOSED) {
+      //#32
+      doPflags[32] = true;
       throw new IllegalStateException("JsonReader is closed");
     }
 
     int c = nextNonWhitespace(true);
     switch (c) {
     case ']':
+    //#33
+    doPflags[33] = true;
       if (peekStack == JsonScope.EMPTY_ARRAY) {
+        //#34
+        doPflags[34] = true;
         return peeked = PEEKED_END_ARRAY;
+      }else{
+        //#35
+        doPflags[35] = true;
       }
       // fall-through to handle ",]"
     case ';':
+      //#36
+      doPflags[36] = true;
     case ',':
+      //#37
+      doPflags[37] = true;
       // In lenient mode, a 0-length literal in an array means 'null'.
       if (peekStack == JsonScope.EMPTY_ARRAY || peekStack == JsonScope.NONEMPTY_ARRAY) {
+        //#38
+        doPflags[38] = true;
         checkLenient();
         pos--;
         return peeked = PEEKED_NULL;
       } else {
+        //#39
+        doPflags[39] = true;
         throw syntaxError("Unexpected value");
       }
     case '\'':
+    //#40
+    doPflags[40] = true;
       checkLenient();
       return peeked = PEEKED_SINGLE_QUOTED;
     case '"':
+    //#41
+    doPflags[41] = true;
       return peeked = PEEKED_DOUBLE_QUOTED;
     case '[':
+    //#42
+    doPflags[42] = true;
       return peeked = PEEKED_BEGIN_ARRAY;
     case '{':
+    //#43
+    doPflags[43] = true;
       return peeked = PEEKED_BEGIN_OBJECT;
     default:
+    //#44
+    doPflags[44] = true;
       pos--; // Don't consume the first character in a literal value.
     }
 
     int result = peekKeyword();
     if (result != PEEKED_NONE) {
+      //#45
+      doPflags[45] = true;
       return result;
+    }else{
+      //#46
+      doPflags[46] = true;
     }
 
     result = peekNumber();
     if (result != PEEKED_NONE) {
+      //#47
+      doPflags[47] = true;
       return result;
+    }else{
+      //#48
+      doPflags[48] = true;
     }
 
     if (!isLiteral(buffer[pos])) {
+      //#49
+      doPflags[49] = true;
       throw syntaxError("Expected value");
+    }else{
+      //#50
+      doPflags[50] = true;
     }
 
     checkLenient();
